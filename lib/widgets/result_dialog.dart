@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import '../game/game_logic.dart';
-import '../models/game_state.dart';
+import '../models/heart_level.dart';
 import '../theme/app_theme.dart';
 
 class ResultDialog extends StatelessWidget {
   final DefenseResolution resolution;
+  final HeartLevel? level;
   final VoidCallback onReplay;
-  final VoidCallback onReturnToAtrium;
+  final VoidCallback onReturnToCampaign;
+  final VoidCallback? onViewBioFact;
 
   const ResultDialog({
     super.key,
     required this.resolution,
+    this.level,
     required this.onReplay,
-    required this.onReturnToAtrium,
+    required this.onReturnToCampaign,
+    this.onViewBioFact,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isVictory = resolution.outcome == PuzzleOutcome.success;
+    final isVictory = resolution.isVictory;
     final titleColor = isVictory ? AppTheme.leafGreen : AppTheme.amberSeed;
 
     return Dialog(
@@ -97,7 +101,7 @@ class ResultDialog extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  resolution.title,
+                  isVictory ? 'LEVEL SECURED • VICTORY!' : 'DEFENSIVE STRAIN',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 19,
@@ -108,11 +112,35 @@ class ResultDialog extends StatelessWidget {
                 ),
               ),
 
+              const SizedBox(height: 6),
+
+              // Synergy Name Tag
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.mintGlow.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppTheme.mintGlow.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  resolution.synergyName,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                    color: AppTheme.mintGlow,
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 12),
 
               // Narrative Resolution Text
               Text(
-                resolution.message,
+                resolution.outcomeDescription,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 13,
@@ -123,8 +151,8 @@ class ResultDialog extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              // Reward Banner: Magical Botanical Resilience Seed Relic
-              if (resolution.awardedSeed)
+              // Reward Banner
+              if (isVictory)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
@@ -141,20 +169,20 @@ class ResultDialog extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const FittedBox(
+                  child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.grain_rounded,
                           color: AppTheme.amberSeed,
                           size: 26,
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(
-                          '+1 RESILIENCE SEED AWARDED!',
-                          style: TextStyle(
+                          '+${level?.seedReward ?? 1} RESILIENCE SEED AWARDED!',
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.9,
@@ -166,14 +194,50 @@ class ResultDialog extends StatelessWidget {
                   ),
                 ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 20),
 
-              // Action Buttons
+              // View Bio-Fact Button (If victory & level provided)
+              if (isVictory && onViewBioFact != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onViewBioFact,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: const Color(0xFF2D6A4F),
+                      foregroundColor: Colors.white,
+                      elevation: 6,
+                      shadowColor: const Color(0xFF52B788).withValues(alpha: 0.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.menu_book_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'VIEW BIO-FACT',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // Action Buttons: Campaign Map & Play Again
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: onReturnToAtrium,
+                      onPressed: onReturnToCampaign,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(
@@ -185,7 +249,7 @@ class ResultDialog extends StatelessWidget {
                         ),
                       ),
                       child: const Text(
-                        'ATRIUM',
+                        'CAMPAIGN',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
@@ -201,17 +265,17 @@ class ResultDialog extends StatelessWidget {
                       onPressed: onReplay,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppTheme.leafGreen,
-                        foregroundColor: Colors.black,
+                        backgroundColor: isVictory ? AppTheme.leafGreen : AppTheme.rosePetal,
+                        foregroundColor: isVictory ? Colors.black : Colors.white,
                         elevation: 6,
                         shadowColor: AppTheme.leafGreen.withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text(
-                        'PLAY AGAIN',
-                        style: TextStyle(
+                      child: Text(
+                        isVictory ? 'REPLAY' : 'TRY AGAIN',
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.2,

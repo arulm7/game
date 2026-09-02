@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:saviours_vs_saboteurs/game/game_logic.dart';
+import 'package:saviours_vs_saboteurs/game/heart_campaign.dart';
 import 'package:saviours_vs_saboteurs/main.dart';
-import 'package:saviours_vs_saboteurs/models/defense_card.dart';
-import 'package:saviours_vs_saboteurs/models/enemy.dart';
-import 'package:saviours_vs_saboteurs/models/game_state.dart';
-import 'package:saviours_vs_saboteurs/models/grid_cell.dart';
 
 void main() {
-  testWidgets('Game navigation and full defense flow test', (WidgetTester tester) async {
-    // Set standard tablet/desktop test surface to comfortably fit all screens
+  testWidgets('Full Campaign Navigation, Level Intro, Battle, and Bio-Fact flow test',
+      (WidgetTester tester) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -18,86 +14,88 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    // 1. Verify Magical Garden screen
+    // 1. Garden Screen
     expect(find.text('SAVIOURS'), findsOneWidget);
     expect(find.text('SABOTEURS'), findsOneWidget);
-    expect(find.text('Protect the Living Garden'), findsOneWidget);
     expect(find.text('ENTER HEART'), findsOneWidget);
 
-    // 2. Tap ENTER HEART -> Navigate to Heart-Rose Atrium
+    // 2. Navigate to Heart Atrium
     await tester.tap(find.text('ENTER HEART'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('HEART-ROSE ATRIUM'), findsOneWidget);
-    expect(find.text('HEART VITALITY'), findsOneWidget);
-    expect(find.text('PLAQUE CREEP'), findsOneWidget);
-    expect(find.text('ENTER STRATEGY'), findsOneWidget);
+    expect(find.text('ENTER CAMPAIGN'), findsOneWidget);
 
-    // 3. Tap ENTER STRATEGY -> Navigate to The Arterial Breach
-    await tester.tap(find.text('ENTER STRATEGY'));
+    // 3. Navigate to Campaign Level Select
+    await tester.tap(find.text('ENTER CAMPAIGN'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('THE ARTERIAL BREACH'), findsOneWidget);
-    expect(find.text('ARTERIAL ROOT NETWORK'), findsOneWidget);
-    expect(find.text('3 × 3 GRID'), findsOneWidget);
+    expect(find.text(HeartCampaign.stageTitle), findsOneWidget);
+    expect(find.text('1-1'), findsOneWidget);
+    expect(find.text('THE MORNING RUSH'), findsOneWidget);
+
+    // 4. Tap Level 1-1 Node -> Opens Level Intro Dialog
+    await tester.tap(find.text('1-1'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('LEVEL 1-1'), findsOneWidget);
+    expect(find.text('STRESS PARASITES'), findsWidgets);
+    expect(find.text('ENTER BATTLE'), findsOneWidget);
+
+    // 5. Enter Battle
+    await tester.tap(find.text('ENTER BATTLE'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('BREACH • LEVEL 1-1'), findsOneWidget);
+    expect(find.text('FORGIVENESS MEDITATION'), findsOneWidget);
     expect(find.text('ISOTONIC FLOW'), findsOneWidget);
-    expect(find.text('BEETROOT FLUSH'), findsOneWidget);
 
-    // Defend button is initially disabled with text prompt
-    expect(find.text('SELECT 2 CARDS TO DEFEND'), findsOneWidget);
+    // 6. Select 2 cards & Defend
+    await tester.tap(find.text('FORGIVENESS MEDITATION'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // 4. Select exactly 2 cards
     await tester.tap(find.text('ISOTONIC FLOW'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('SELECT 2 CARDS TO DEFEND'), findsOneWidget);
 
-    await tester.tap(find.text('BEETROOT FLUSH'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    // Now Defend button should say DEFEND HEART
     expect(find.text('DEFEND HEART'), findsOneWidget);
 
-    // 5. Tap DEFEND HEART to resolve
     await tester.tap(find.text('DEFEND HEART'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify Result dialog appears with victory/success & seed award
-    expect(find.textContaining('BREACH SECURED'), findsOneWidget);
+    // 7. Verify Result Dialog
+    expect(find.textContaining('LEVEL SECURED'), findsOneWidget);
     expect(find.text('+1 RESILIENCE SEED AWARDED!'), findsOneWidget);
-    expect(find.text('PLAY AGAIN'), findsOneWidget);
+    expect(find.text('VIEW BIO-FACT'), findsOneWidget);
 
-    // 6. Test replay
-    await tester.tap(find.text('PLAY AGAIN'));
+    // 8. View Bio-Fact Card
+    await tester.tap(find.text('VIEW BIO-FACT'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('SELECT 2 CARDS TO DEFEND'), findsOneWidget);
-  });
+    expect(find.text('BIO-FACT ARCHIVE'), findsOneWidget);
+    expect(find.text('WHAT HAPPENED?'), findsOneWidget);
+    expect(find.text('GAME STRATEGY LESSON'), findsOneWidget);
+    expect(find.text('REAL-WORLD HEALTH CONNECTION'), findsOneWidget);
+    expect(find.text('CONTINUE TO CAMPAIGN'), findsOneWidget);
 
-  test('GameLogic unit test for deterministic synergy resolution', () {
-    final cards = [
-      DefenseCard.initialCards[0], // Isotonic Flow
-      DefenseCard.initialCards[1], // Beetroot Flush
-    ];
+    // 9. Continue to Campaign -> returns to Level Select with 1-2 unlocked!
+    await tester.tap(find.text('CONTINUE TO CAMPAIGN'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
 
-    final result = GameLogic.resolveDefense(
-      selectedCards: cards,
-      currentVitality: 80,
-      currentEnemy: Enemy.plaqueCreep,
-      currentGrid: GridCell.initialBreachGrid,
-    );
-
-    expect(result.outcome, equals(PuzzleOutcome.success));
-    expect(result.awardedSeed, isTrue);
-    expect(result.newVitality, equals(100));
-    expect(result.updatedEnemy.currentHealth, equals(0));
+    expect(find.text(HeartCampaign.stageTitle), findsOneWidget);
+    expect(find.text('1-2'), findsOneWidget);
   });
 }

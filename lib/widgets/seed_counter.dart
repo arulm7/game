@@ -3,10 +3,12 @@ import '../theme/app_theme.dart';
 
 class SeedCounter extends StatefulWidget {
   final int count;
+  final bool compact;
 
   const SeedCounter({
     super.key,
     required this.count,
+    this.compact = false,
   });
 
   @override
@@ -35,7 +37,10 @@ class _SeedCounterState extends State<SeedCounter>
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.compact ? 10 : 14,
+        vertical: widget.compact ? 5 : 7,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF131F16).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(22),
@@ -64,33 +69,34 @@ class _SeedCounterState extends State<SeedCounter>
             animation: _pulseController,
             builder: (context, _) {
               return CustomPaint(
-                size: const Size(20, 24),
+                size: Size(widget.compact ? 16 : 20, widget.compact ? 20 : 24),
                 painter: _BotanicalSeedPainter(pulse: _pulseController.value),
               );
             },
           ),
-          const SizedBox(width: 9),
+          SizedBox(width: widget.compact ? 6 : 9),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'RESILIENCE SEEDS',
-                style: TextStyle(
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.9,
-                  color: Color(0xFFA7D8B9),
+              if (!widget.compact)
+                const Text(
+                  'RESILIENCE SEEDS',
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.9,
+                    color: Color(0xFFA7D8B9),
+                  ),
                 ),
-              ),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
                 child: Text(
                   '${widget.count}',
                   key: ValueKey<int>(widget.count),
-                  style: const TextStyle(
-                    fontSize: 15,
+                  style: TextStyle(
+                    fontSize: widget.compact ? 13 : 15,
                     fontWeight: FontWeight.w900,
                     color: AppTheme.amberSeed,
                     letterSpacing: 0.5,

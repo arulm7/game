@@ -42,14 +42,19 @@ class _DefenseCardWidgetState extends State<DefenseCardWidget>
   LinearGradient _getCardGradient() {
     switch (widget.card.type) {
       case DefenseCardType.isotonicFlow:
+      case DefenseCardType.hydrationTorrent:
         return AppTheme.isotonicGradient;
       case DefenseCardType.beetrootFlush:
+      case DefenseCardType.tomatoLasers:
         return AppTheme.beetrootGradient;
       case DefenseCardType.potassiumRainbow:
+      case DefenseCardType.goodLaughBlast:
         return AppTheme.potassiumGradient;
       case DefenseCardType.relaxation:
+      case DefenseCardType.forgivenessMeditation:
         return AppTheme.relaxationGradient;
       case DefenseCardType.isometricHold:
+      case DefenseCardType.deepSleepShield:
         return AppTheme.isometricGradient;
     }
   }

@@ -1,142 +1,157 @@
 import '../models/defense_card.dart';
 import '../models/enemy.dart';
-import '../models/game_state.dart';
 import '../models/grid_cell.dart';
 
 class DefenseResolution {
-  final PuzzleOutcome outcome;
-  final int newVitality;
-  final Enemy updatedEnemy;
-  final List<GridCell> updatedGrid;
-  final String title;
-  final String message;
-  final bool awardedSeed;
-  final int damageDealt;
+  final int totalDefensePower;
+  final int netDamageToHeart;
   final int vitalityRestored;
+  final int enemyDamageTaken;
+  final bool isVictory;
+  final String synergyName;
+  final String outcomeDescription;
+  final List<GridCell> updatedGrid;
+  final Enemy updatedEnemy;
 
   const DefenseResolution({
-    required this.outcome,
-    required this.newVitality,
-    required this.updatedEnemy,
-    required this.updatedGrid,
-    required this.title,
-    required this.message,
-    required this.awardedSeed,
-    required this.damageDealt,
+    required this.totalDefensePower,
+    required this.netDamageToHeart,
     required this.vitalityRestored,
+    required this.enemyDamageTaken,
+    required this.isVictory,
+    required this.synergyName,
+    required this.outcomeDescription,
+    required this.updatedGrid,
+    required this.updatedEnemy,
   });
 }
 
 class GameLogic {
   static DefenseResolution resolveDefense({
     required List<DefenseCard> selectedCards,
-    required int currentVitality,
-    required Enemy currentEnemy,
+    required Enemy enemy,
     required List<GridCell> currentGrid,
+    int currentVitality = 80,
+    int maxVitality = 100,
   }) {
-    if (selectedCards.length != 2) {
-      return DefenseResolution(
-        outcome: PuzzleOutcome.none,
-        newVitality: currentVitality,
-        updatedEnemy: currentEnemy,
-        updatedGrid: currentGrid,
-        title: 'Incomplete Defense',
-        message: 'Select exactly 2 defense cards to balance your strategy.',
-        awardedSeed: false,
-        damageDealt: 0,
-        vitalityRestored: 0,
-      );
+    int baseDefense = 0;
+    for (final card in selectedCards) {
+      baseDefense += card.defensePower;
     }
 
-    final card1 = selectedCards[0];
-    final card2 = selectedCards[1];
-    final types = {card1.type, card2.type};
+    final types = selectedCards.map((c) => c.type).toSet();
+    int bonusDefense = 0;
+    String synergyName = 'Standard Botanical Defense';
+    String outcomeDescription = 'The Heart-Rose deployed natural botanical resistance.';
 
-    int totalPower = card1.defensePower + card2.defensePower;
-    int synergyBonus = 0;
-    String synergyName = 'Botanical Synergy';
-    String description = '';
-
-    // Calculate synergies
-    if (types.contains(DefenseCardType.isotonicFlow) &&
-        types.contains(DefenseCardType.beetrootFlush)) {
-      synergyBonus = 25;
-      synergyName = 'Hydro-Nitric Rush';
-      description =
-          'Rhythmic isotonic movement combined with nitric-oxide botanical surge flushes the arterial breach!';
-    } else if (types.contains(DefenseCardType.relaxation) &&
-        types.contains(DefenseCardType.beetrootFlush)) {
-      synergyBonus = 20;
-      synergyName = 'Vascular Harmony';
-      description =
-          'Arterial tension dropped rapidly, allowing beetroot nutrients to dilate and soothe root channels.';
-    } else if (types.contains(DefenseCardType.isotonicFlow) &&
+    // 1. Level 1-1 Synergy: Forgiveness Meditation + Relaxation / Isotonic Flow
+    if (types.contains(DefenseCardType.forgivenessMeditation) &&
         types.contains(DefenseCardType.relaxation)) {
-      synergyBonus = 18;
-      synergyName = 'Rhythmic Calm';
-      description =
-          'Active movement without stress overload stabilizes the heart-rose rhythm and clears pressure nodes.';
-    } else if (types.contains(DefenseCardType.potassiumRainbow) &&
-        types.contains(DefenseCardType.isometricHold)) {
-      synergyBonus = 15;
-      synergyName = 'Electrolyte Fortification';
-      description =
-          'Mineral balance reinforces vascular wall resilience against plaque calcification.';
-    } else if (types.contains(DefenseCardType.potassiumRainbow) &&
-        types.contains(DefenseCardType.isotonicFlow)) {
-      synergyBonus = 15;
-      synergyName = 'Nutrient Flow';
-      description =
-          'Vital nutrients spread quickly through active channels, dissolving early crystalline deposits.';
-    } else {
-      synergyBonus = 10;
-      synergyName = 'Botanical Reinforcement';
-      description =
-          'The combined botanical remedies fortify the Heart-Rose against Plaque Creep encroachment.';
+      bonusDefense = 45;
+      synergyName = 'SERENE PARASYMPATHETIC CALM';
+      outcomeDescription =
+          'Mindful forgiveness froze the adrenaline swarm while gentle relaxation soothed arterial tension!';
+    } else if (types.contains(DefenseCardType.forgivenessMeditation)) {
+      bonusDefense = 30;
+      synergyName = 'MINDFUL SURGE FREEZE';
+      outcomeDescription =
+          'Forgiveness Meditation arrested the acute stress surge and shielded root conduits.';
     }
 
-    final int finalDamage = totalPower + synergyBonus;
-    final int enemyNewHealth = (currentEnemy.currentHealth - finalDamage).clamp(0, currentEnemy.maxHealth);
-    final bool enemyDefeated = enemyNewHealth == 0;
+    // 2. Level 1-2 Synergy: Potassium Rainbow + Beetroot Flush
+    else if (types.contains(DefenseCardType.potassiumRainbow) &&
+        types.contains(DefenseCardType.beetrootFlush)) {
+      bonusDefense = 50;
+      synergyName = 'ELECTROLYTE NITRIC SURGE';
+      outcomeDescription =
+          'Potassium Rainbow dissolved sodium crystallization while Beetroot Flush dilated constricted pathways!';
+    } else if (types.contains(DefenseCardType.potassiumRainbow)) {
+      bonusDefense = 30;
+      synergyName = 'POTASSIUM FLUID EQUILIBRIUM';
+      outcomeDescription =
+          'Potassium nutrients countered acute sodium fluid pressure across arterial walls.';
+    }
 
-    // Grid purification: turn blocked and critical cells into cleared/open
+    // 3. Level 1-3 Synergy: Deep Sleep Shield + Isotonic Flow
+    else if (types.contains(DefenseCardType.deepSleepShield) &&
+        types.contains(DefenseCardType.isotonicFlow)) {
+      bonusDefense = 55;
+      synergyName = 'CIRCADIAN RESTORATIVE FLOW';
+      outcomeDescription =
+          'Deep Sleep Shield created an impenetrable recovery wall while Isotonic Flow restored rhythmic circulation!';
+    } else if (types.contains(DefenseCardType.deepSleepShield)) {
+      bonusDefense = 35;
+      synergyName = 'NOCTURNAL BARRIER';
+      outcomeDescription =
+          'Deep Sleep Shield absorbed the compound invasion and provided crucial recovery window.';
+    }
+
+    // 4. Level 1-4 Boss Synergy: Good Laugh Blast + Beetroot Flush
+    else if (types.contains(DefenseCardType.goodLaughBlast) &&
+        types.contains(DefenseCardType.beetrootFlush)) {
+      bonusDefense = 65;
+      synergyName = 'ENDORPHIN NITRIC OVERDRIVE';
+      outcomeDescription =
+          'Joyful laughter endorphins triggered massive endothelial dilation, shattering the Hypertension Hijacker!';
+    } else if (types.contains(DefenseCardType.goodLaughBlast)) {
+      bonusDefense = 40;
+      synergyName = 'ENDORPHIN VASCULAR RELEASE';
+      outcomeDescription =
+          'Good Laugh Blast expanded constricted channels and destabilized the Hijacker rhythm.';
+    }
+
+    // 5. Classic Stage 1 Prototype Synergies
+    else if (types.contains(DefenseCardType.isotonicFlow) &&
+        types.contains(DefenseCardType.beetrootFlush)) {
+      bonusDefense = 45;
+      synergyName = 'VASCULAR FLOW SURGE';
+      outcomeDescription =
+          'Rhythmic flow and nitric-oxide root dilation surged through arterial pathways, clearing blockages!';
+    } else if (types.contains(DefenseCardType.relaxation) &&
+        types.contains(DefenseCardType.isometricHold)) {
+      bonusDefense = 40;
+      synergyName = 'EQUILIBRIUM FORTRESS';
+      outcomeDescription =
+          'Calming resonance and sustained root conditioning fortified vascular tone against pressure!';
+    }
+
+    final totalDefense = baseDefense + bonusDefense;
+    final isVictory = totalDefense >= enemy.baseDamage;
+
+    final int enemyDmg = isVictory ? enemy.maxHealth : (totalDefense * 0.8).round();
+    final updatedEnemy = enemy.copyWith(
+      currentHealth: (enemy.currentHealth - enemyDmg).clamp(0, enemy.maxHealth),
+    );
+
+    int netDmg = 0;
+    int vitalityRestored = 0;
+
+    if (isVictory) {
+      vitalityRestored = (totalDefense * 0.35).round().clamp(15, 40);
+    } else {
+      netDmg = (enemy.baseDamage - totalDefense).clamp(10, 45);
+    }
+
+    // Update arterial grid cells: resolve blocked and critical nodes
     final updatedGrid = currentGrid.map((cell) {
-      if (cell.status == CellStatus.blocked || cell.status == CellStatus.critical) {
-        return cell.copyWith(status: CellStatus.cleared);
+      if (isVictory) {
+        if (cell.status == CellStatus.blocked || cell.status == CellStatus.critical) {
+          return cell.copyWith(status: CellStatus.cleared);
+        }
       }
       return cell;
     }).toList();
 
-    if (enemyDefeated) {
-      final int heal = 20;
-      final int newVit = (currentVitality + heal).clamp(0, 100);
-      return DefenseResolution(
-        outcome: PuzzleOutcome.success,
-        newVitality: newVit,
-        updatedEnemy: currentEnemy.copyWith(currentHealth: 0),
-        updatedGrid: updatedGrid,
-        title: 'BREACH SECURED! ($synergyName)',
-        message:
-            '$description\n\nPlaque Creep was dispelled from the arterial roots. Heart Vitality restored to $newVit%!',
-        awardedSeed: true,
-        damageDealt: finalDamage,
-        vitalityRestored: heal,
-      );
-    } else {
-      final int heal = 10;
-      final int newVit = (currentVitality + heal).clamp(0, 100);
-      return DefenseResolution(
-        outcome: PuzzleOutcome.partialSuccess,
-        newVitality: newVit,
-        updatedEnemy: currentEnemy.copyWith(currentHealth: enemyNewHealth),
-        updatedGrid: updatedGrid,
-        title: 'PARTIAL DEFENSE ($synergyName)',
-        message:
-            '$description\n\nPlaque Creep took $finalDamage damage ($enemyNewHealth/${currentEnemy.maxHealth} HP remaining).',
-        awardedSeed: false,
-        damageDealt: finalDamage,
-        vitalityRestored: heal,
-      );
-    }
+    return DefenseResolution(
+      totalDefensePower: totalDefense,
+      netDamageToHeart: netDmg,
+      vitalityRestored: vitalityRestored,
+      enemyDamageTaken: enemyDmg,
+      isVictory: isVictory,
+      synergyName: synergyName,
+      outcomeDescription: outcomeDescription,
+      updatedGrid: updatedGrid,
+      updatedEnemy: updatedEnemy,
+    );
   }
 }

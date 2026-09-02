@@ -7,7 +7,7 @@ import '../../widgets/heart_rose.dart';
 import '../../widgets/seed_counter.dart';
 import '../../widgets/threat_display.dart';
 import '../../widgets/vitality_bar.dart';
-import '../puzzle/arterial_breach_screen.dart';
+import '../campaign/heart_campaign_screen.dart';
 
 class HeartAtriumScreen extends StatelessWidget {
   final GameState gameState;
@@ -63,8 +63,8 @@ class HeartAtriumScreen extends StatelessWidget {
                           listenable: gameState,
                           builder: (context, _) {
                             return VitalityBar(
-                              vitality: gameState.heartVitality,
-                              maxVitality: gameState.maxHeartVitality,
+                              vitality: gameState.vitality,
+                              maxVitality: gameState.maxVitality,
                             );
                           },
                         ),
@@ -89,19 +89,19 @@ class HeartAtriumScreen extends StatelessWidget {
 
                         const SizedBox(height: 14),
 
-                        // Active Threat: Plaque Creep Biological Blight
+                        // Active Threat: Level Threat Creature
                         ListenableBuilder(
                           listenable: gameState,
                           builder: (context, _) {
                             return ThreatDisplay(
-                              enemy: gameState.currentEnemy,
+                              enemy: gameState.enemy,
                             );
                           },
                         ),
 
                         const SizedBox(height: 18),
 
-                        // Bottom Action: ENTER STRATEGY
+                        // Bottom Action: ENTER STRATEGY CAMPAIGN
                         _buildEnterStrategyButton(context),
                       ],
                     ),
@@ -120,7 +120,7 @@ class HeartAtriumScreen extends StatelessWidget {
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 380),
       child: ElevatedButton(
-        onPressed: () => _navigateToStrategy(context),
+        onPressed: () => _navigateToCampaign(context),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: AppTheme.leafGreen,
@@ -136,10 +136,10 @@ class HeartAtriumScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.grid_view_rounded, size: 22),
+              Icon(Icons.map_rounded, size: 22),
               SizedBox(width: 10),
               Text(
-                'ENTER STRATEGY',
+                'ENTER CAMPAIGN',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -155,10 +155,10 @@ class HeartAtriumScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToStrategy(BuildContext context) {
+  void _navigateToCampaign(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ArterialBreachScreen(gameState: gameState),
+        builder: (_) => HeartCampaignScreen(gameState: gameState),
       ),
     );
   }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../game/game_logic.dart';
 import '../../models/game_state.dart';
+import '../../models/heart_level.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/arterial_grid_widget.dart';
+import '../../widgets/bio_fact_card.dart';
 import '../../widgets/botanical_particles.dart';
 import '../../widgets/defense_card_widget.dart';
 import '../../widgets/result_dialog.dart';
@@ -12,10 +14,12 @@ import '../../widgets/vitality_bar.dart';
 
 class ArterialBreachScreen extends StatefulWidget {
   final GameState gameState;
+  final HeartLevel? level;
 
   const ArterialBreachScreen({
     super.key,
     required this.gameState,
+    this.level,
   });
 
   @override
@@ -25,6 +29,7 @@ class ArterialBreachScreen extends StatefulWidget {
 class _ArterialBreachScreenState extends State<ArterialBreachScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _defendAnimController;
+  bool _isResolving = false;
 
   @override
   void initState() {
@@ -33,6 +38,10 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
+
+    if (widget.level != null && widget.gameState.currentLevel.id != widget.level!.id) {
+      widget.gameState.selectLevel(widget.level!);
+    }
   }
 
   @override
@@ -41,43 +50,72 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
     super.dispose();
   }
 
-  Future<void> _executeDefense() async {
-    if (!widget.gameState.canDefend) return;
+  HeartLevel get _activeLevel => widget.level ?? widget.gameState.currentLevel;
 
-    widget.gameState.setResolving(true);
+  Future<void> _executeDefense() async {
+    if (widget.gameState.selectedCards.length != 2) return;
+
+    setState(() => _isResolving = true);
     await _defendAnimController.forward(from: 0.0);
 
-    // Resolve defense logic
+    // Deterministic defense resolution
     final resolution = GameLogic.resolveDefense(
       selectedCards: widget.gameState.selectedCards,
-      currentVitality: widget.gameState.heartVitality,
-      currentEnemy: widget.gameState.currentEnemy,
+      enemy: widget.gameState.enemy,
       currentGrid: widget.gameState.grid,
+      currentVitality: widget.gameState.vitality,
+      maxVitality: widget.gameState.maxVitality,
     );
 
-    widget.gameState.updateAfterDefense(
-      newVitality: resolution.newVitality,
-      updatedEnemy: resolution.updatedEnemy,
+    widget.gameState.applyDefenseResolution(
+      vitalityChange: resolution.vitalityRestored > 0
+          ? resolution.vitalityRestored
+          : -resolution.netDamageToHeart,
       updatedGrid: resolution.updatedGrid,
-      outcome: resolution.outcome,
-      message: resolution.message,
-      awardedSeed: resolution.awardedSeed,
+      updatedEnemy: resolution.updatedEnemy,
+      isVictory: resolution.isVictory,
     );
 
+    setState(() => _isResolving = false);
     if (!mounted) return;
 
+    _showResultDialog(resolution);
+  }
+
+  void _showResultDialog(DefenseResolution resolution) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogCtx) => ResultDialog(
         resolution: resolution,
+        level: _activeLevel,
         onReplay: () {
           Navigator.of(dialogCtx).pop();
-          widget.gameState.resetPuzzle();
+          widget.gameState.resetBattleState();
         },
-        onReturnToAtrium: () {
+        onReturnToCampaign: () {
           Navigator.of(dialogCtx).pop();
           Navigator.of(context).pop();
+        },
+        onViewBioFact: resolution.isVictory
+            ? () {
+                Navigator.of(dialogCtx).pop();
+                _showBioFactModal();
+              }
+            : null,
+      ),
+    );
+  }
+
+  void _showBioFactModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (factCtx) => BioFactCard(
+        level: _activeLevel,
+        onContinue: () {
+          Navigator.of(factCtx).pop();
+          Navigator.of(context).pop(); // Return to Campaign Level Select
         },
       ),
     );
@@ -87,11 +125,11 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('THE ARTERIAL BREACH'),
+        title: Text('BREACH • LEVEL ${_activeLevel.id}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Return to Atrium',
+          tooltip: 'Return to Campaign',
         ),
         actions: [
           Padding(
@@ -118,6 +156,7 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
               listenable: widget.gameState,
               builder: (context, _) {
                 final selectedCount = widget.gameState.selectedCards.length;
+                final availableCards = _activeLevel.availableCards;
 
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -125,16 +164,16 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Top Row: Living Sap Vitality Gauge & Threat Snapshot
+                      // Top Row: Living Sap Vitality Gauge & Level Threat
                       VitalityBar(
-                        vitality: widget.gameState.heartVitality,
-                        maxVitality: widget.gameState.maxHeartVitality,
+                        vitality: widget.gameState.vitality,
+                        maxVitality: widget.gameState.maxVitality,
                       ),
 
                       const SizedBox(height: 10),
 
                       ThreatDisplay(
-                        enemy: widget.gameState.currentEnemy,
+                        enemy: widget.gameState.enemy,
                         compact: true,
                       ),
 
@@ -144,15 +183,20 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'ARTERIAL ROOT NETWORK',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              color: Color(0xFFD8F3DC),
+                          Expanded(
+                            child: Text(
+                              'ARTERIAL ROOT NETWORK • ${_activeLevel.title}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.1,
+                                color: Color(0xFFD8F3DC),
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -183,7 +227,7 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
                           constraints: const BoxConstraints(maxWidth: 320, maxHeight: 320),
                           child: ArterialGridWidget(
                             grid: widget.gameState.grid,
-                            isResolving: widget.gameState.isResolving,
+                            isResolving: _isResolving,
                           ),
                         ),
                       ),
@@ -195,7 +239,7 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            'BOTANICAL DEFENSE ABILITIES',
+                            'CURATED TACTICAL DECK',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
@@ -233,21 +277,21 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
 
                       const SizedBox(height: 8),
 
-                      // Horizontal Scrollable Cards
+                      // Horizontal Scrollable Cards Deck
                       SizedBox(
-                        height: 180,
+                        height: 192,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           physics: const BouncingScrollPhysics(),
-                          itemCount: widget.gameState.availableCards.length,
+                          itemCount: availableCards.length,
                           itemBuilder: (context, index) {
-                            final card = widget.gameState.availableCards[index];
-                            final isSelected = widget.gameState.isCardSelected(card);
+                            final card = availableCards[index];
+                            final isSelected = widget.gameState.selectedCards.any((c) => c.id == card.id);
 
                             return DefenseCardWidget(
                               card: card,
                               isSelected: isSelected,
-                              isSelectionLocked: widget.gameState.isResolving,
+                              isSelectionLocked: _isResolving,
                               onTap: () => widget.gameState.toggleCardSelection(card),
                             );
                           },
@@ -256,26 +300,28 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
 
                       const SizedBox(height: 16),
 
-                      // DEFEND HEART Major Action Button
+                      // DEFEND HEART Action Button
                       Center(
                         child: Container(
                           width: double.infinity,
                           constraints: const BoxConstraints(maxWidth: 380),
                           child: ElevatedButton(
-                            onPressed: widget.gameState.canDefend ? _executeDefense : null,
+                            onPressed: (selectedCount == 2 && !_isResolving)
+                                ? _executeDefense
+                                : null,
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               backgroundColor: AppTheme.rosePetal,
                               disabledBackgroundColor: const Color(0xFF13221C),
                               foregroundColor: Colors.white,
                               disabledForegroundColor: const Color(0xFF4A6B5E),
-                              elevation: widget.gameState.canDefend ? 8 : 0,
+                              elevation: selectedCount == 2 ? 8 : 0,
                               shadowColor: AppTheme.rosePetal.withValues(alpha: 0.55),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
                             ),
-                            child: widget.gameState.isResolving
+                            child: _isResolving
                                 ? const FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Row(
