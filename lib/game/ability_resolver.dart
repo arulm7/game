@@ -182,7 +182,7 @@ class AbilityResolver {
       }
     }
 
-    // Level 1-3 Useful Combinations (Sleep shield paired with other recovery)
+    // Level 1-3 Useful Combinations (Sleep shield or potassium flow)
     if (level.id == '1-3') {
       if (ids.contains(AbilityId.deepSleepShield)) {
         return const BattleOutcome(
@@ -195,6 +195,19 @@ class AbilityResolver {
               'Deep Sleep Shield absorbed the compound invasion and provided crucial recovery window.',
           synergyDetected: true,
           synergyName: 'NOCTURNAL BARRIER',
+        );
+      }
+      if (ids.contains(AbilityId.potassiumRainbow) && ids.contains(AbilityId.isotonicFlow)) {
+        return const BattleOutcome(
+          grade: BattleOutcomeGrade.good,
+          playerDamage: 12,
+          threatDamage: 50,
+          pressureChange: -10,
+          vitalityRestored: 12,
+          message:
+              'Potassium nutrients and isotonic circulation softened the dual surge.',
+          synergyDetected: true,
+          synergyName: 'ELECTROLYTE CIRCULATION',
         );
       }
     }

@@ -106,9 +106,9 @@ class HeartCampaign {
       stageNumber: 1,
       levelNumber: 3,
       title: 'THE ALL-NIGHTER',
-      subtitle: 'Stage 1-3 • Dual Exhaustion Surge',
+      subtitle: 'Stage 1-3 • Combined Threat Surge',
       scenario:
-          'Sleep deprivation combined with acute stress and sodium spikes creates a dual invasion suffocating the Heart-Rose!',
+          'An all-night session has stirred a combined Stress Parasite and Sodium Spike surge through the arterial roots. Choose two defenses to protect the Heart-Rose.',
       enemy: Enemy.stressAndSodium,
       initialGrid: const [
         GridCell(row: 0, col: 0, status: CellStatus.blocked, label: 'L-Superior'),
@@ -132,14 +132,14 @@ class HeartCampaign {
         DefenseCardType.isotonicFlow,
       ],
       recommendedHint:
-          'Deep Sleep Shield provides a nocturnal restorative wall against dual threats while Isotonic Flow keeps circulation active.',
+          'Think about the whole challenge, not just one threat. Deep Sleep Shield provides recovery while Isotonic Flow restores circulation.',
       bioFact: const BioFact(
         whatHappened:
-            'Dual stressors attacked the Heart-Rose. Deep restorative rest combined with gentle circulation cleansed the breach.',
+            'The combined Stress Parasite and Sodium Spike surge created a stronger challenge in this game scenario.',
         gameLesson:
-            'Compounded fatigue requires prioritizing foundational recovery and rhythmic movement.',
+            'Some challenges have more than one pressure point. A strong strategy considers the whole situation before choosing a pair of defenses.',
         realWorldConnection:
-            'During deep sleep, blood pressure naturally dips and vascular tissues repair. Chronic sleep loss disrupts this rhythm, elevating baseline cardiovascular strain.',
+            'Sleep is an important part of overall health, and dietary patterns including sodium and potassium can be relevant to cardiovascular health. The game\'s abilities simplify these ideas into strategy mechanics and are not medical treatment.',
       ),
       isBoss: false,
       seedReward: 1,

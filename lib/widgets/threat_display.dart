@@ -167,12 +167,72 @@ class _ThreatDisplayState extends State<ThreatDisplay>
                 Text(
                   widget.enemy.name,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.8,
                     color: Color(0xFFFFF0F3),
                   ),
                 ),
+                if (widget.enemy.type == EnemyType.stressAndSodium) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF758F).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFFFF758F).withValues(alpha: 0.6),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.bolt_rounded, size: 10, color: Color(0xFFFF758F)),
+                            SizedBox(width: 3),
+                            Text(
+                              'STRESS',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFFF758F),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF9E00).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFFFF9E00).withValues(alpha: 0.6),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.grain_rounded, size: 10, color: Color(0xFFFF9E00)),
+                            SizedBox(width: 3),
+                            Text(
+                              'SODIUM',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFFF9E00),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 if (!widget.compact) ...[
                   const SizedBox(height: 3),
                   Text(
