@@ -62,7 +62,7 @@ class HeartCampaign {
       title: 'THE FAST-FOOD PITSTOP',
       subtitle: 'Stage 1-2 • Sodium Overload',
       scenario:
-          'A sodium-heavy meal draws fluid pressure into the root conduits. Sharp Sodium Spikes are stiffening the vessel walls!',
+          'An in-game Sodium Spike surge is moving through the arterial roots. Choose two defenses to protect the Heart-Rose.',
       enemy: Enemy.sodiumSpikes,
       initialGrid: const [
         GridCell(row: 0, col: 0, status: CellStatus.blocked, label: 'L-Superior'),
@@ -89,11 +89,11 @@ class HeartCampaign {
           'Potassium-Rich Rainbow Flush counters sodium crystallization while Beetroot Flush expands constricted conduits.',
       bioFact: const BioFact(
         whatHappened:
-            'Excess sodium stiffened the vascular conduits. Potassium-rich nourishment and nitric dilation restored fluid equilibrium.',
+            'The Sodium Spikes overwhelmed the arterial roots in this game scenario until the selected defenses countered the surge.',
         gameLesson:
-            'High-sodium pressure is countered through colorful potassium-rich nutrition and vascular dilation.',
+            'Some abilities work better together because they address related parts of the same challenge.',
         realWorldConnection:
-            'High dietary sodium promotes fluid retention and vascular resistance. Potassium helps the body balance sodium levels and relax arterial walls.',
+            'Potassium is an important nutrient, and overall dietary patterns can influence cardiovascular health. The game\'s effects are simplified representations for learning and are not medical treatment.',
       ),
       isBoss: false,
       seedReward: 1,

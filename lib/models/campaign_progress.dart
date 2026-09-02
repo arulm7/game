@@ -16,8 +16,8 @@ class CampaignProgress {
 
   bool get isStage1Completed => _completedLevelIds.contains('1-4');
 
-  void completeLevel(String levelId) {
-    _completedLevelIds.add(levelId);
+  bool completeLevel(String levelId) {
+    final isFirstCompletion = _completedLevelIds.add(levelId);
 
     // Unlock next level in progression
     if (levelId == '1-1') {
@@ -27,6 +27,8 @@ class CampaignProgress {
     } else if (levelId == '1-3') {
       _unlockedLevelIds.add('1-4');
     }
+
+    return isFirstCompletion;
   }
 
   void resetProgress() {

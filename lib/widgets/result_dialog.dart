@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 class ResultDialog extends StatelessWidget {
   final DefenseResolution resolution;
   final HeartLevel? level;
+  final bool isFirstCompletion;
   final VoidCallback onReplay;
   final VoidCallback onReturnToCampaign;
   final VoidCallback? onViewBioFact;
@@ -15,6 +16,7 @@ class ResultDialog extends StatelessWidget {
     super.key,
     required this.resolution,
     this.level,
+    this.isFirstCompletion = true,
     required this.onReplay,
     required this.onReturnToCampaign,
     this.onViewBioFact,
@@ -271,14 +273,16 @@ class ResultDialog extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.grain_rounded,
+                        Icon(
+                          isFirstCompletion ? Icons.grain_rounded : Icons.check_circle_rounded,
                           color: AppTheme.amberSeed,
                           size: 22,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '+${level?.seedReward ?? 1} RESILIENCE SEED AWARDED!',
+                          isFirstCompletion
+                              ? '+${level?.seedReward ?? 1} RESILIENCE SEED AWARDED!'
+                              : 'SANCTUARY DEFENDED • REPLAY VICTORY',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,

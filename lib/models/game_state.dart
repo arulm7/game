@@ -118,8 +118,10 @@ class GameState extends ChangeNotifier {
 
     if (resolution.isVictory) {
       _battleStatus = BattleStatus.victory;
-      _campaignProgress.completeLevel(_currentLevel.id);
-      _resilienceSeeds += _currentLevel.seedReward;
+      final isFirstCompletion = _campaignProgress.completeLevel(_currentLevel.id);
+      if (isFirstCompletion) {
+        _resilienceSeeds += _currentLevel.seedReward;
+      }
     } else {
       _battleStatus = BattleStatus.defeat;
     }
@@ -145,8 +147,10 @@ class GameState extends ChangeNotifier {
 
     if (isVictory) {
       _battleStatus = BattleStatus.victory;
-      _campaignProgress.completeLevel(_currentLevel.id);
-      _resilienceSeeds += _currentLevel.seedReward;
+      final isFirstCompletion = _campaignProgress.completeLevel(_currentLevel.id);
+      if (isFirstCompletion) {
+        _resilienceSeeds += _currentLevel.seedReward;
+      }
     } else {
       _battleStatus = BattleStatus.defeat;
     }
