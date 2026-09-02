@@ -12,6 +12,21 @@ import 'package:saviours_vs_saboteurs/models/heart_level.dart';
 
 void main() {
   group('Part A — Replay Seed Reward Fix Regression Tests', () {
+    test('A1. CampaignProgress.completeLevel() returns true on first completion and false on replay', () {
+      final progress = CampaignProgress();
+      expect(progress.isLevelCompleted('1-1'), isFalse);
+
+      final firstCall = progress.completeLevel('1-1');
+      expect(firstCall, isTrue);
+      expect(progress.isLevelCompleted('1-1'), isTrue);
+      expect(progress.isLevelUnlocked('1-2'), isTrue);
+
+      final secondCall = progress.completeLevel('1-1');
+      expect(secondCall, isFalse);
+      expect(progress.isLevelCompleted('1-1'), isTrue);
+      expect(progress.isLevelUnlocked('1-2'), isTrue);
+    });
+
     test('A2. Replaying completed Level 1-1 does not duplicate seed reward or reset progression', () {
       final gameState = GameState(initialResilienceSeeds: 1);
       final l1 = HeartCampaign.getLevelById('1-1');

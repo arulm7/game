@@ -19,13 +19,15 @@ class CampaignProgress {
   bool completeLevel(String levelId) {
     final isFirstCompletion = _completedLevelIds.add(levelId);
 
-    // Unlock next level in progression
-    if (levelId == '1-1') {
-      _unlockedLevelIds.add('1-2');
-    } else if (levelId == '1-2') {
-      _unlockedLevelIds.add('1-3');
-    } else if (levelId == '1-3') {
-      _unlockedLevelIds.add('1-4');
+    // Unlock next level in progression on first completion
+    if (isFirstCompletion) {
+      if (levelId == '1-1') {
+        _unlockedLevelIds.add('1-2');
+      } else if (levelId == '1-2') {
+        _unlockedLevelIds.add('1-3');
+      } else if (levelId == '1-3') {
+        _unlockedLevelIds.add('1-4');
+      }
     }
 
     return isFirstCompletion;

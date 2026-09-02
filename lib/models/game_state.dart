@@ -25,6 +25,7 @@ class GameState extends ChangeNotifier {
   final CampaignProgress _campaignProgress;
   BattleStatus _battleStatus;
   BattleOutcome? _lastOutcome;
+  bool _isLastVictoryFirstCompletion = false;
 
   List<GridCell> _grid;
   Enemy _enemy;
@@ -56,6 +57,7 @@ class GameState extends ChangeNotifier {
   CampaignProgress get campaignProgress => _campaignProgress;
   BattleStatus get battleStatus => _battleStatus;
   BattleOutcome? get lastOutcome => _lastOutcome;
+  bool get isLastVictoryFirstCompletion => _isLastVictoryFirstCompletion;
   List<GridCell> get grid => List.unmodifiable(_grid);
   Enemy get enemy => _enemy;
   List<DefenseCard> get selectedCards => List.unmodifiable(_selectedCards);
@@ -70,6 +72,7 @@ class GameState extends ChangeNotifier {
     _selectedCards.clear();
     _battleStatus = BattleStatus.ready;
     _lastOutcome = null;
+    _isLastVictoryFirstCompletion = false;
     notifyListeners();
   }
 
@@ -118,12 +121,13 @@ class GameState extends ChangeNotifier {
 
     if (resolution.isVictory) {
       _battleStatus = BattleStatus.victory;
-      final isFirstCompletion = _campaignProgress.completeLevel(_currentLevel.id);
-      if (isFirstCompletion) {
+      _isLastVictoryFirstCompletion = _campaignProgress.completeLevel(_currentLevel.id);
+      if (_isLastVictoryFirstCompletion) {
         _resilienceSeeds += _currentLevel.seedReward;
       }
     } else {
       _battleStatus = BattleStatus.defeat;
+      _isLastVictoryFirstCompletion = false;
     }
 
     notifyListeners();
@@ -147,12 +151,13 @@ class GameState extends ChangeNotifier {
 
     if (isVictory) {
       _battleStatus = BattleStatus.victory;
-      final isFirstCompletion = _campaignProgress.completeLevel(_currentLevel.id);
-      if (isFirstCompletion) {
+      _isLastVictoryFirstCompletion = _campaignProgress.completeLevel(_currentLevel.id);
+      if (_isLastVictoryFirstCompletion) {
         _resilienceSeeds += _currentLevel.seedReward;
       }
     } else {
       _battleStatus = BattleStatus.defeat;
+      _isLastVictoryFirstCompletion = false;
     }
 
     notifyListeners();
@@ -166,6 +171,7 @@ class GameState extends ChangeNotifier {
     _pressure = 100;
     _battleStatus = BattleStatus.ready;
     _lastOutcome = null;
+    _isLastVictoryFirstCompletion = false;
     notifyListeners();
   }
 }

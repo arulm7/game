@@ -70,16 +70,12 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
       currentPressure: widget.gameState.pressure,
     );
 
-    // Determine if this is first completion
-    final wasAlreadyCompleted =
-        widget.gameState.campaignProgress.isLevelCompleted(_activeLevel.id);
-
     widget.gameState.applyResolution(resolution);
 
     setState(() => _isResolving = false);
     if (!mounted) return;
 
-    _showResultDialog(resolution, !wasAlreadyCompleted);
+    _showResultDialog(resolution, widget.gameState.isLastVictoryFirstCompletion);
   }
 
   void _showResultDialog(DefenseResolution resolution, bool isFirstCompletion) {
