@@ -57,12 +57,12 @@ void main() {
     expect(find.text('FORGIVENESS MEDITATION'), findsOneWidget);
     expect(find.text('ISOTONIC FLOW'), findsOneWidget);
 
-    // 6. Select 2 cards & Defend
+    // 6. Select 2 cards & Defend (Optimal Level 1-1 synergy: Forgiveness + Relaxation)
     await tester.tap(find.text('FORGIVENESS MEDITATION'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.tap(find.text('ISOTONIC FLOW'));
+    await tester.tap(find.text('RELAXATION'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -73,8 +73,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pump(const Duration(milliseconds: 500));
 
-    // 7. Verify Result Dialog
-    expect(find.textContaining('LEVEL SECURED'), findsOneWidget);
+    // 7. Verify Result Dialog with EXCELLENT grade
+    expect(find.text('EXCELLENT DEFENSE!'), findsOneWidget);
     expect(find.text('+1 RESILIENCE SEED AWARDED!'), findsOneWidget);
     expect(find.text('VIEW BIO-FACT'), findsOneWidget);
 

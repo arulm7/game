@@ -7,6 +7,7 @@ import '../../widgets/arterial_grid_widget.dart';
 import '../../widgets/bio_fact_card.dart';
 import '../../widgets/botanical_particles.dart';
 import '../../widgets/defense_card_widget.dart';
+import '../../widgets/pressure_gauge.dart';
 import '../../widgets/result_dialog.dart';
 import '../../widgets/seed_counter.dart';
 import '../../widgets/threat_display.dart';
@@ -56,25 +57,20 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
     if (widget.gameState.selectedCards.length != 2) return;
 
     setState(() => _isResolving = true);
+    widget.gameState.setBattleStatus(BattleStatus.resolving);
     await _defendAnimController.forward(from: 0.0);
 
-    // Deterministic defense resolution
-    final resolution = GameLogic.resolveDefense(
+    // Deterministic battle resolution through AbilityResolver & GameLogic
+    final resolution = GameLogic.resolveBattle(
+      level: _activeLevel,
       selectedCards: widget.gameState.selectedCards,
-      enemy: widget.gameState.enemy,
       currentGrid: widget.gameState.grid,
       currentVitality: widget.gameState.vitality,
       maxVitality: widget.gameState.maxVitality,
+      currentPressure: widget.gameState.pressure,
     );
 
-    widget.gameState.applyDefenseResolution(
-      vitalityChange: resolution.vitalityRestored > 0
-          ? resolution.vitalityRestored
-          : -resolution.netDamageToHeart,
-      updatedGrid: resolution.updatedGrid,
-      updatedEnemy: resolution.updatedEnemy,
-      isVictory: resolution.isVictory,
-    );
+    widget.gameState.applyResolution(resolution);
 
     setState(() => _isResolving = false);
     if (!mounted) return;
@@ -170,14 +166,58 @@ class _ArterialBreachScreenState extends State<ArterialBreachScreen>
                         maxVitality: widget.gameState.maxVitality,
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
                       ThreatDisplay(
                         enemy: widget.gameState.enemy,
                         compact: true,
                       ),
 
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 8),
+
+                      // Vascular Pressure Gauge
+                      PressureGauge(
+                        pressure: widget.gameState.pressure,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Threat Approach & Scenario Banner
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B090F).withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: widget.gameState.enemy.threatColor.withValues(alpha: 0.45),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              size: 15,
+                              color: widget.gameState.enemy.threatColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${widget.gameState.enemy.name} approaching the Heart-Rose arterial roots!',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: widget.gameState.enemy.threatColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
 
                       // Living Root Network Header
                       Row(

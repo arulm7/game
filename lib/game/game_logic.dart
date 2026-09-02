@@ -1,8 +1,13 @@
+import '../models/ability.dart';
+import '../models/battle_outcome.dart';
 import '../models/defense_card.dart';
 import '../models/enemy.dart';
 import '../models/grid_cell.dart';
+import '../models/heart_level.dart';
+import 'ability_resolver.dart';
 
 class DefenseResolution {
+  final BattleOutcome outcome;
   final int totalDefensePower;
   final int netDamageToHeart;
   final int vitalityRestored;
@@ -12,8 +17,10 @@ class DefenseResolution {
   final String outcomeDescription;
   final List<GridCell> updatedGrid;
   final Enemy updatedEnemy;
+  final int pressureChange;
 
   const DefenseResolution({
+    required this.outcome,
     required this.totalDefensePower,
     required this.netDamageToHeart,
     required this.vitalityRestored,
@@ -23,116 +30,46 @@ class DefenseResolution {
     required this.outcomeDescription,
     required this.updatedGrid,
     required this.updatedEnemy,
+    required this.pressureChange,
   });
+
+  BattleOutcomeGrade get grade => outcome.grade;
 }
 
 class GameLogic {
-  static DefenseResolution resolveDefense({
+  /// Validates that exactly 2 abilities/cards are selected.
+  static bool validateSelection(List<DefenseCard> selectedCards) {
+    return selectedCards.length == 2;
+  }
+
+  /// Authoritative battle resolution method using [AbilityResolver].
+  static DefenseResolution resolveBattle({
+    required HeartLevel level,
     required List<DefenseCard> selectedCards,
-    required Enemy enemy,
     required List<GridCell> currentGrid,
     int currentVitality = 80,
     int maxVitality = 100,
+    int currentPressure = 100,
   }) {
-    int baseDefense = 0;
-    for (final card in selectedCards) {
-      baseDefense += card.defensePower;
+    if (!validateSelection(selectedCards)) {
+      throw ArgumentError('Exactly 2 cards must be selected to resolve battle.');
     }
 
-    final types = selectedCards.map((c) => c.type).toSet();
-    int bonusDefense = 0;
-    String synergyName = 'Standard Botanical Defense';
-    String outcomeDescription = 'The Heart-Rose deployed natural botanical resistance.';
+    final abilities = selectedCards.map((c) => c.ability).toList();
+    final outcome = AbilityResolver.resolve(
+      level: level,
+      selectedAbilities: abilities,
+    );
 
-    // 1. Level 1-1 Synergy: Forgiveness Meditation + Relaxation / Isotonic Flow
-    if (types.contains(DefenseCardType.forgivenessMeditation) &&
-        types.contains(DefenseCardType.relaxation)) {
-      bonusDefense = 45;
-      synergyName = 'SERENE PARASYMPATHETIC CALM';
-      outcomeDescription =
-          'Mindful forgiveness froze the adrenaline swarm while gentle relaxation soothed arterial tension!';
-    } else if (types.contains(DefenseCardType.forgivenessMeditation)) {
-      bonusDefense = 30;
-      synergyName = 'MINDFUL SURGE FREEZE';
-      outcomeDescription =
-          'Forgiveness Meditation arrested the acute stress surge and shielded root conduits.';
-    }
-
-    // 2. Level 1-2 Synergy: Potassium Rainbow + Beetroot Flush
-    else if (types.contains(DefenseCardType.potassiumRainbow) &&
-        types.contains(DefenseCardType.beetrootFlush)) {
-      bonusDefense = 50;
-      synergyName = 'ELECTROLYTE NITRIC SURGE';
-      outcomeDescription =
-          'Potassium Rainbow dissolved sodium crystallization while Beetroot Flush dilated constricted pathways!';
-    } else if (types.contains(DefenseCardType.potassiumRainbow)) {
-      bonusDefense = 30;
-      synergyName = 'POTASSIUM FLUID EQUILIBRIUM';
-      outcomeDescription =
-          'Potassium nutrients countered acute sodium fluid pressure across arterial walls.';
-    }
-
-    // 3. Level 1-3 Synergy: Deep Sleep Shield + Isotonic Flow
-    else if (types.contains(DefenseCardType.deepSleepShield) &&
-        types.contains(DefenseCardType.isotonicFlow)) {
-      bonusDefense = 55;
-      synergyName = 'CIRCADIAN RESTORATIVE FLOW';
-      outcomeDescription =
-          'Deep Sleep Shield created an impenetrable recovery wall while Isotonic Flow restored rhythmic circulation!';
-    } else if (types.contains(DefenseCardType.deepSleepShield)) {
-      bonusDefense = 35;
-      synergyName = 'NOCTURNAL BARRIER';
-      outcomeDescription =
-          'Deep Sleep Shield absorbed the compound invasion and provided crucial recovery window.';
-    }
-
-    // 4. Level 1-4 Boss Synergy: Good Laugh Blast + Beetroot Flush
-    else if (types.contains(DefenseCardType.goodLaughBlast) &&
-        types.contains(DefenseCardType.beetrootFlush)) {
-      bonusDefense = 65;
-      synergyName = 'ENDORPHIN NITRIC OVERDRIVE';
-      outcomeDescription =
-          'Joyful laughter endorphins triggered massive endothelial dilation, shattering the Hypertension Hijacker!';
-    } else if (types.contains(DefenseCardType.goodLaughBlast)) {
-      bonusDefense = 40;
-      synergyName = 'ENDORPHIN VASCULAR RELEASE';
-      outcomeDescription =
-          'Good Laugh Blast expanded constricted channels and destabilized the Hijacker rhythm.';
-    }
-
-    // 5. Classic Stage 1 Prototype Synergies
-    else if (types.contains(DefenseCardType.isotonicFlow) &&
-        types.contains(DefenseCardType.beetrootFlush)) {
-      bonusDefense = 45;
-      synergyName = 'VASCULAR FLOW SURGE';
-      outcomeDescription =
-          'Rhythmic flow and nitric-oxide root dilation surged through arterial pathways, clearing blockages!';
-    } else if (types.contains(DefenseCardType.relaxation) &&
-        types.contains(DefenseCardType.isometricHold)) {
-      bonusDefense = 40;
-      synergyName = 'EQUILIBRIUM FORTRESS';
-      outcomeDescription =
-          'Calming resonance and sustained root conditioning fortified vascular tone against pressure!';
-    }
-
-    final totalDefense = baseDefense + bonusDefense;
-    final isVictory = totalDefense >= enemy.baseDamage;
-
-    final int enemyDmg = isVictory ? enemy.maxHealth : (totalDefense * 0.8).round();
+    final enemy = level.enemy;
+    final int enemyDmg = outcome.threatDamage;
     final updatedEnemy = enemy.copyWith(
       currentHealth: (enemy.currentHealth - enemyDmg).clamp(0, enemy.maxHealth),
     );
 
-    int netDmg = 0;
-    int vitalityRestored = 0;
+    final isVictory = outcome.isSuccess;
 
-    if (isVictory) {
-      vitalityRestored = (totalDefense * 0.35).round().clamp(15, 40);
-    } else {
-      netDmg = (enemy.baseDamage - totalDefense).clamp(10, 45);
-    }
-
-    // Update arterial grid cells: resolve blocked and critical nodes
+    // Update arterial grid cells: resolve blocked and critical nodes on success
     final updatedGrid = currentGrid.map((cell) {
       if (isVictory) {
         if (cell.status == CellStatus.blocked || cell.status == CellStatus.critical) {
@@ -142,16 +79,186 @@ class GameLogic {
       return cell;
     }).toList();
 
+    int baseDefense = 0;
+    for (final card in selectedCards) {
+      baseDefense += card.defensePower;
+    }
+
     return DefenseResolution(
-      totalDefensePower: totalDefense,
-      netDamageToHeart: netDmg,
-      vitalityRestored: vitalityRestored,
-      enemyDamageTaken: enemyDmg,
+      outcome: outcome,
+      totalDefensePower: baseDefense + (outcome.isSuccess ? 40 : 0),
+      netDamageToHeart: outcome.playerDamage,
+      vitalityRestored: outcome.vitalityRestored,
+      enemyDamageTaken: outcome.threatDamage,
       isVictory: isVictory,
-      synergyName: synergyName,
-      outcomeDescription: outcomeDescription,
+      synergyName: outcome.synergyName,
+      outcomeDescription: outcome.message,
       updatedGrid: updatedGrid,
       updatedEnemy: updatedEnemy,
+      pressureChange: outcome.pressureChange,
     );
+  }
+
+  /// Backward-compatible bridge for existing callers.
+  static DefenseResolution resolveDefense({
+    required List<DefenseCard> selectedCards,
+    required Enemy enemy,
+    required List<GridCell> currentGrid,
+    int currentVitality = 80,
+    int maxVitality = 100,
+  }) {
+    // Construct or infer level context
+    final level = _inferLevelForEnemy(enemy, selectedCards);
+    return resolveBattle(
+      level: level,
+      selectedCards: selectedCards,
+      currentGrid: currentGrid,
+      currentVitality: currentVitality,
+      maxVitality: maxVitality,
+    );
+  }
+
+  static HeartLevel _inferLevelForEnemy(Enemy enemy, List<DefenseCard> cards) {
+    // Map by enemy type
+    switch (enemy.type) {
+      case EnemyType.stressParasites:
+        return HeartLevel(
+          id: '1-1',
+          stageNumber: 1,
+          levelNumber: 1,
+          title: 'THE MORNING RUSH',
+          subtitle: 'Stage 1-1',
+          scenario: 'Stress Parasites invasion.',
+          enemy: enemy,
+          initialGrid: const [],
+          availableCardTypes: const [
+            AbilityId.forgivenessMeditation,
+            AbilityId.isotonicFlow,
+            AbilityId.relaxation,
+            AbilityId.isometricHold,
+          ],
+          recommendedSynergy: const [
+            AbilityId.forgivenessMeditation,
+            AbilityId.relaxation,
+          ],
+          recommendedHint: '',
+          bioFact: const BioFact(
+            whatHappened: '',
+            gameLesson: '',
+            realWorldConnection: '',
+          ),
+        );
+      case EnemyType.sodiumSpikes:
+        return HeartLevel(
+          id: '1-2',
+          stageNumber: 1,
+          levelNumber: 2,
+          title: 'THE FAST-FOOD PITSTOP',
+          subtitle: 'Stage 1-2',
+          scenario: 'Sodium Spikes invasion.',
+          enemy: enemy,
+          initialGrid: const [],
+          availableCardTypes: const [
+            AbilityId.potassiumRainbow,
+            AbilityId.beetrootFlush,
+            AbilityId.isotonicFlow,
+            AbilityId.isometricHold,
+          ],
+          recommendedSynergy: const [
+            AbilityId.potassiumRainbow,
+            AbilityId.beetrootFlush,
+          ],
+          recommendedHint: '',
+          bioFact: const BioFact(
+            whatHappened: '',
+            gameLesson: '',
+            realWorldConnection: '',
+          ),
+        );
+      case EnemyType.stressAndSodium:
+        return HeartLevel(
+          id: '1-3',
+          stageNumber: 1,
+          levelNumber: 3,
+          title: 'THE ALL-NIGHTER',
+          subtitle: 'Stage 1-3',
+          scenario: 'Dual invasion.',
+          enemy: enemy,
+          initialGrid: const [],
+          availableCardTypes: const [
+            AbilityId.deepSleepShield,
+            AbilityId.isotonicFlow,
+            AbilityId.relaxation,
+            AbilityId.potassiumRainbow,
+          ],
+          recommendedSynergy: const [
+            AbilityId.deepSleepShield,
+            AbilityId.isotonicFlow,
+          ],
+          recommendedHint: '',
+          bioFact: const BioFact(
+            whatHappened: '',
+            gameLesson: '',
+            realWorldConnection: '',
+          ),
+        );
+      case EnemyType.hypertensionHijacker:
+        return HeartLevel(
+          id: '1-4',
+          stageNumber: 1,
+          levelNumber: 4,
+          title: 'HYPERTENSION HIJACKER',
+          subtitle: 'Stage 1 Boss',
+          scenario: 'Boss encounter.',
+          enemy: enemy,
+          initialGrid: const [],
+          availableCardTypes: const [
+            AbilityId.goodLaughBlast,
+            AbilityId.beetrootFlush,
+            AbilityId.isotonicFlow,
+            AbilityId.relaxation,
+            AbilityId.isometricHold,
+          ],
+          recommendedSynergy: const [
+            AbilityId.goodLaughBlast,
+            AbilityId.beetrootFlush,
+          ],
+          recommendedHint: '',
+          bioFact: const BioFact(
+            whatHappened: '',
+            gameLesson: '',
+            realWorldConnection: '',
+          ),
+          isBoss: true,
+        );
+      case EnemyType.plaqueCreep:
+        return HeartLevel(
+          id: '1-1',
+          stageNumber: 1,
+          levelNumber: 1,
+          title: 'PLAQUE BREACH',
+          subtitle: 'Stage 1 Prototype',
+          scenario: 'Plaque Creep invasion.',
+          enemy: enemy,
+          initialGrid: const [],
+          availableCardTypes: const [
+            AbilityId.isotonicFlow,
+            AbilityId.beetrootFlush,
+            AbilityId.potassiumRainbow,
+            AbilityId.relaxation,
+            AbilityId.isometricHold,
+          ],
+          recommendedSynergy: const [
+            AbilityId.isotonicFlow,
+            AbilityId.beetrootFlush,
+          ],
+          recommendedHint: '',
+          bioFact: const BioFact(
+            whatHappened: '',
+            gameLesson: '',
+            realWorldConnection: '',
+          ),
+        );
+    }
   }
 }

@@ -43,11 +43,11 @@ class HeartCampaign {
           'Forgiveness Meditation freezes the adrenaline parasite swarm, while Relaxation soothes arterial tension.',
       bioFact: const BioFact(
         whatHappened:
-            'Stress Parasites triggered acute vascular clamping. Mindful forgiveness and relaxation calmed the autonomic surge.',
+            'The selected defenses reduced the Stress Parasites\' pressure in the game.',
         gameLesson:
-            'Sudden pressure spikes are best countered by emotional calm and mindful release rather than forcing physical strain.',
+            'Combining abilities that address the same challenge can create a stronger defense.',
         realWorldConnection:
-            'Acute psychological stress triggers adrenaline release, constricting vessels. Calming practices activate the parasympathetic nervous system, easing cardiovascular load.',
+            'Stress activates the body\'s stress-response systems. Relaxation and healthy coping strategies can support a calmer response. Long-term healthy lifestyle patterns are important for cardiovascular health.',
       ),
       isBoss: false,
       seedReward: 1,
